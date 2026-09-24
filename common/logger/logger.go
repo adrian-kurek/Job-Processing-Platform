@@ -2,6 +2,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"log/slog"
 	"os"
@@ -10,15 +11,25 @@ import (
 	"github.com/DeRuina/timberjack"
 )
 
-func Setup() *slog.Logger {
+type logSource string
+
+const (
+	APILogSource     logSource = "api"
+	WorkerLogSource  logSource = "worker"
+	maxFileSize                = 100
+	maxBackups                 = 7
+	maxAge                     = 30
+	rotationInterval           = 24
+)
+
+func Setup(source logSource) *slog.Logger {
 	logRotator := timberjack.Logger{
-		Filename:         "./logs/app.log",
-		MaxSize:          100,
-		MaxBackups:       7,
-		MaxAge:           30,
-		Compress:         true,
-		RotationInterval: 24 * time.Hour,
+		Filename:         fmt.Sprintf("./logs/%s.log", source),
+		MaxSize:          maxFileSize,
+		MaxBackups:       maxBackups,
+		MaxAge:           maxAge,
+		RotationInterval: rotationInterval * time.Hour,
 	}
 
-	return slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, &logRotator), nil))
+	return slog.New(slog.NewJSONHandler(io.MultiWriter(os.Stdout, &logRotator), nil)).With("source", source)
 }

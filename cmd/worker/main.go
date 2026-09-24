@@ -5,6 +5,6 @@ import (
 )
 
 func main() {
-	logger := logger.Setup()
+	logger := logger.Setup(logger.WorkerLogSource)
 	logger.Info("Worker started")
 }
