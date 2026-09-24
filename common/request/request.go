@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
@@ -27,18 +27,19 @@ func Make(f HTTPFunc) http.HandlerFunc {
 		actualDate := time.Now()
 		logTime := actualDate.Format("2006-01-02 15:04:05")
 		if err := f(w, r); err != nil {
-			if apiErr, ok := err.(*commonerrors.API); ok {
+			apiErr := &commonerrors.API{}
+			if errors.As(err, &apiErr) {
 				response.Send(w, apiErr.StatusCode, map[string]string{"message": apiErr.Message})
 			} else {
-				log.Println(err.Error())
+				slog.ErrorContext(r.Context(), err.Error())
 				response.Send(w, http.StatusInternalServerError, map[string]string{"message": "Internal server error"})
 			}
 		}
 		durationOfTheRoute := time.Since(start) / time.Millisecond
 		formattedDurationOfTheRoute := strconv.FormatInt(int64(durationOfTheRoute), 10) + "ms"
 
-		log.Println(green + "[INFO: " + logTime + "] " + r.Method + "-" + r.URL.Path + "-" + r.
-			RemoteAddr + "-" + formattedDurationOfTheRoute + reset)
+		slog.InfoContext(r.Context(), green+"[INFO: "+logTime+"] "+r.Method+"-"+r.URL.Path+"-"+r.
+			RemoteAddr+"-"+formattedDurationOfTheRoute+reset)
 	}
 }
 
@@ -69,8 +70,8 @@ func ReadBody[T any](r *http.Request) (*T, error) {
 	return &body, nil
 }
 
-func ReadQueryParam(r *http.Request, QueryName string) string {
-	name := r.URL.Query().Get(QueryName)
+func ReadQueryParam(r *http.Request, queryName string) string {
+	name := r.URL.Query().Get(queryName)
 	return name
 }
 
