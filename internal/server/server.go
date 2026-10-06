@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/adrian-kurek/Job-Processing-Platform/internal/job"
 )
 
 const (
@@ -13,12 +15,14 @@ const (
 )
 
 type DependencyConfig struct {
-	port string
+	port       string
+	jobHandler job.Handler
 }
 
-func NewDependencyConfig(port string) *DependencyConfig {
+func NewDependencyConfig(port string, jobHandler job.Handler) *DependencyConfig {
 	return &DependencyConfig{
-		port: port,
+		port:       port,
+		jobHandler: jobHandler,
 	}
 }
 
@@ -36,6 +40,8 @@ func NewHTTP(config *DependencyConfig) *HTTP {
 }
 
 func (h *HTTP) setupRoutes() {
+	jobRoute := job.NewRoute(&h.config.jobHandler)
+	jobRoute.SetupRoutes(h.router)
 }
 
 func (h *HTTP) Start() error {

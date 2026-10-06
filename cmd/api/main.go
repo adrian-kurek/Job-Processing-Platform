@@ -10,6 +10,7 @@ import (
 
 	"github.com/adrian-kurek/Job-Processing-Platform/common/logger"
 	"github.com/adrian-kurek/Job-Processing-Platform/config"
+	"github.com/adrian-kurek/Job-Processing-Platform/internal/job"
 	"github.com/adrian-kurek/Job-Processing-Platform/internal/server"
 	"github.com/joho/godotenv"
 )
@@ -24,8 +25,11 @@ func connectToDB() (*config.DB, error) {
 	return db, nil
 }
 
-func bootstrapDependencies(loggerService *slog.Logger, db *config.DB, port string) *server.HTTP {
-	dependencies := server.NewDependencyConfig(port)
+func bootstrapDependencies(logger *slog.Logger, db *config.DB, port string) *server.HTTP {
+	jobRepository := job.NewRepository(db.Connection, logger)
+	jobService := job.NewService(jobRepository, logger)
+	jobHandler := job.NewHandler(jobService, logger)
+	dependencies := server.NewDependencyConfig(port, *jobHandler)
 	return server.NewHTTP(dependencies)
 }
 
