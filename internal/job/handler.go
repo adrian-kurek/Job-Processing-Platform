@@ -3,6 +3,7 @@ package job
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
@@ -49,6 +50,7 @@ func (jh *Handler) Insert(w http.ResponseWriter, r *http.Request) error {
 
 	err = middleware.ValidateRequestData(reqData)
 	if err != nil {
+		fmt.Println(err.Error())
 		return err
 	}
 

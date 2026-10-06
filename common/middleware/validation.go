@@ -41,6 +41,10 @@ func ValidateRequestData(dataFromRequest any) error {
 					return commonerrors.Validation(
 						fmt.Sprintf("the %s field must be the same as %s field", e.Field(), e.Param()),
 					)
+				case "oneof":
+					return commonerrors.Validation(
+						fmt.Sprintf("Provided %s is not supported by the application", e.Field()),
+					)
 				}
 			}
 			return err
