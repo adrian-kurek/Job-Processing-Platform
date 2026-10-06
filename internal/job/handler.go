@@ -8,6 +8,7 @@ import (
 	"time"
 
 	commonerrors "github.com/adrian-kurek/Job-Processing-Platform/common/errors"
+	"github.com/adrian-kurek/Job-Processing-Platform/common/middleware"
 	"github.com/adrian-kurek/Job-Processing-Platform/common/request"
 )
 
@@ -31,7 +32,7 @@ const CRUDTimeout = 5 * time.Second
 
 func (jh *Handler) handleTimeout(err error, path string) error {
 	if errors.Is(err, context.DeadlineExceeded) {
-		jh.logger.Info("request timed out", path)
+		jh.logger.Info("request timed out", "path", path)
 		return commonerrors.RequestTimeout()
 	}
 	return err
@@ -43,7 +44,12 @@ func (jh *Handler) Insert(w http.ResponseWriter, r *http.Request) error {
 
 	reqData, err := request.ReadBody[CreateDTO](r)
 	if err != nil {
-		return commonerrors.NewAPI(http.StatusUnprocessableEntity, "provided invalid json format")
+		return commonerrors.InvalidJSONFormat()
+	}
+
+	err = middleware.ValidateRequestData(reqData)
+	if err != nil {
+		return err
 	}
 
 	err = jh.handlerService.Insert(ctx, *reqData)
